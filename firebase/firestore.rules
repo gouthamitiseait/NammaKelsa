@@ -1,0 +1,118 @@
+// ============================================================
+// firestore.rules — Namma-Kelsa
+// Firebase Firestore Security Rules
+//
+// PRD Section 6.4 — Security:
+//  - Firebase Security Rules must prevent users from reading or
+//    writing other users' private data
+//  - Worker phone number visible only after customer taps CALL
+//    button (not shown in search list)
+//  - All Firebase Storage URLs are authenticated
+//
+// PRD Section 11.2 — Success Criteria:
+//  "Firestore Security Rules prevent cross-user data access
+//   (verified in Firebase console)"
+// ============================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================================
+    // HELPER FUNCTIONS
+    // ==========================================================
+
+    /** Check if the request is from an authenticated user */
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    /** Check if the authenticated user owns this document */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /** Validate worker profile fields on write */
+    function isValidWorkerProfile() {
+      let data = request.resource.data;
+      return data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 100
+        && data.dailyRate is int
+        && data.dailyRate >= 100
+        && data.dailyRate <= 99999
+        && data.skills is list
+        && data.skills.size() > 0
+        && data.location is string
+        && data.location.size() > 0;
+    }
+
+    // ==========================================================
+    // WORKERS COLLECTION — /workers/{userId}
+    // PRD Section 8.2: Firestore Data Model
+    // ==========================================================
+
+    match /workers/{userId} {
+
+      /**
+       * READ Rules:
+       *
+       * Any authenticated user can READ a worker document.
+       * This allows:
+       *  - Customers to view worker profiles in search (F-05)
+       *  - Customers to view full worker profile in WorkerDetailActivity (F-06)
+       *  - Workers to read their own profile for the dashboard (F-02)
+       *
+       * NOTE: Phone number is in the document but the app only
+       * shows it when the CALL button is tapped (enforced in the
+       * Android app, not in Firestore rules — Firestore doesn't
+       * support field-level reads without Cloud Functions).
+       */
+      allow read: if isAuthenticated();
+
+      /**
+       * CREATE Rules:
+       *
+       * A worker can only create their OWN profile document.
+       * Document ID must match the authenticated user's UID.
+       * PRD Section 6.4: Users cannot write other users' data.
+       */
+      allow create: if isAuthenticated()
+        && isOwner(userId)
+        && isValidWorkerProfile();
+
+      /**
+       * UPDATE Rules:
+       *
+       * A worker can only update their OWN profile document.
+       * PRD Section 4.2: Profile editable at any time from dashboard.
+       * PRD Section 4.4: Availability toggle updates own document only.
+       */
+      allow update: if isAuthenticated()
+        && isOwner(userId);
+
+      /**
+       * DELETE Rules:
+       *
+       * Only the worker can delete their own profile.
+       * Not exposed in the UI (future feature).
+       */
+      allow delete: if isAuthenticated()
+        && isOwner(userId);
+    }
+
+    // ==========================================================
+    // DENY ALL OTHER COLLECTIONS BY DEFAULT
+    // ==========================================================
+
+    /**
+     * Any collection not explicitly listed above is denied.
+     * This is the default Firestore behaviour with rules_version = '2'.
+     * Explicitly stating it here for clarity.
+     */
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

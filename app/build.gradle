@@ -1,0 +1,134 @@
+// ============================================================
+// build.gradle (app-level)
+// Namma-Kelsa Android App
+// PRD Section 8.1 — Technology Stack
+// ============================================================
+
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    // Firebase & Google Services
+    id 'com.google.gms.google-services'
+}
+
+android {
+    namespace 'com.nammakelsa'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.nammakelsa"
+        // PRD Section 8.1: Android API 24+ (Android 7.0 Nougat and above)
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        multiDexEnabled true
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // PRD Section 5.4: API key loaded from local.properties — never hardcoded
+        // Add to local.properties: GEMINI_API_KEY=AIza...
+        def localProps = new Properties()
+        def localPropsFile = rootProject.file("local.properties")
+        localProps.load(new FileInputStream(
+                rootProject.file("local.properties")))
+        buildConfigField("String", "GEMINI_API_KEY",
+                "\"${localProps['GEMINI_API_KEY']}\"")
+        if (localPropsFile.exists()) {
+            localPropsFile.withInputStream { localProps.load(it) }
+        }
+        buildConfigField(
+            "String",
+            "GEMINI_API_KEY",
+            "\"${localProps.getProperty('GEMINI_API_KEY', '')}\""
+        )
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                          'proguard-rules.pro'
+            // Keep Firestore model classes from being obfuscated
+            // Add proguard rule: -keep class com.nammakelsa.model.** { *; }
+        }
+        debug {
+            debuggable true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        viewBinding true    // Enables ViewBinding for all layouts
+        buildConfig true    // Enables BuildConfig field access (for API key)
+    }
+}
+
+dependencies {
+
+    // ── AndroidX Core ─────────────────────────────────────────
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
+
+    // ── UI — Material Design 3 ────────────────────────────────
+    // PRD Section 8.1: Android Material Design 3 (ChipGroup, CardView, BottomNav)
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.multidex:multidex:2.0.1'
+
+    // ── Firebase ──────────────────────────────────────────────
+    // PRD Section 8.1: Firebase Firestore, Storage, Authentication
+    // Use Firebase BOM for version management
+    implementation 'com.google.android.gms:play-services-auth:21.0.0'
+    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    implementation 'com.google.firebase:firebase-auth-ktx'       // Phone OTP + Email auth
+    implementation 'com.google.firebase:firebase-firestore-ktx'  // NoSQL real-time database
+    implementation 'com.google.firebase:firebase-storage-ktx'    // Profile & gallery photo storage
+    implementation 'com.google.firebase:firebase-analytics-ktx'  // Optional: usage analytics
+
+    // ── Location — FusedLocationProvider ─────────────────────
+    // PRD Section 8.1: Android FusedLocationProviderClient
+    implementation 'com.google.android.gms:play-services-location:21.1.0'
+
+    // ── Image Loading ─────────────────────────────────────────
+    // Glide — for loading Firebase Storage URLs into ImageViews
+    // Used in: WorkerListAdapter, WorkerDetailActivity, WorkerDashboardActivity
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
+
+    // ── Coroutines ────────────────────────────────────────────
+    // Used throughout for Firebase async operations and GenAI API calls
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3'
+
+    // ── Networking (for Gemini API HTTP calls) ────────────────
+    // PRD Section 5: Gemini API calls via HTTP in GenAIHelper.kt
+    // Uses built-in java.net.HttpURLConnection — no extra library needed
+    // OkHttp is optional but recommended for production
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+
+    // ── JSON Parsing (for Gemini API response) ────────────────
+    // Uses built-in org.json — no extra library needed
+
+    // ── Testing ───────────────────────────────────────────────
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    AndroidManifest.xml — Namma-Kelsa
+    Declares all activities, permissions, and Firebase configuration.
+    PRD Section 8.1 — Android API 24+
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.nammakelsa">
+
+    <!-- ========================================================
+         PERMISSIONS
+    ========================================================= -->
+
+    <!-- Internet — Required for Firebase, Gemini API calls -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Location — PRD Section 4.5: Distance calculation via FusedLocationProvider -->
+    <!-- REQUEST_INSTALL_PACKAGES not needed; location is runtime-requested -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Camera and Gallery — PRD Section 4.2: Upload profile photo from camera or gallery -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Android 13+ uses granular media permissions -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Phone call — PRD F-07: Direct Call Button (uses ACTION_DIAL, no CALL_PHONE needed) -->
+    <!-- ACTION_DIAL does not require CALL_PHONE permission — user confirms before dialing -->
+
+    <!-- ========================================================
+         HARDWARE FEATURES (optional — marks as not required)
+    ========================================================= -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
+    <!-- ========================================================
+         APPLICATION
+    ========================================================= -->
+    <application
+        android:name=".NammaKelsaApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.NammaKelsa"
+        android:supportsRtl="false"
+        android:usesCleartextTraffic="false">
+
+        <!-- ====================================================
+             ACTIVITIES — matches PRD Section 8.3 Folder Structure
+        ===================================================== -->
+
+        <!-- SPLASH — Entry point, routes to correct role dashboard -->
+        <!-- PRD Worker Flow Step 1 / Customer Flow Step 9 -->
+        <activity
+            android:name=".ui.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.NammaKelsa.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- LOGIN — Role selection + Firebase Phone OTP + Email auth -->
+        <!-- PRD Section 4.1 — Authentication Module -->
+        <activity
+            android:name=".ui.LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- ── WORKER ACTIVITIES ─────────────────────────────── -->
+
+        <!-- WORKER DASHBOARD — Availability toggle, stats, quick actions -->
+        <!-- PRD Worker Flow Steps 5-8 -->
+        <activity
+            android:name=".ui.worker.WorkerDashboardActivity"
+            android:exported="false" />
+
+        <!-- WORKER PROFILE SETUP — Name, skills ChipGroup, rate, location, photo -->
+        <!-- PRD Section 4.2, F-10 (AI Badge Suggestion) -->
+        <activity
+            android:name=".ui.worker.WorkerProfileSetupActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- WORK GALLERY — Upload 3 photos + F-08 AI Auto-Describe -->
+        <!-- PRD Section 4.3, F-08 (Gemini Vision) -->
+        <activity
+            android:name=".ui.worker.WorkGalleryActivity"
+            android:exported="false" />
+
+        <!-- ── CUSTOMER ACTIVITIES ───────────────────────────── -->
+
+        <!-- CUSTOMER SEARCH — Skill ChipGroup filter + F-09 NL search -->
+        <!-- PRD Section 4.5, F-09 (Gemini Text) -->
+        <activity
+            android:name=".ui.customer.CustomerSearchActivity"
+            android:exported="false" />
+
+        <!-- WORKER LIST — Full-screen worker results list -->
+        <!-- PRD Section 4.5 -->
+        <activity
+            android:name=".ui.customer.WorkerListActivity"
+            android:exported="false" />
+
+        <!-- WORKER DETAIL — Full profile + F-07 Direct Call Button -->
+        <!-- PRD Section 4.6, F-07 -->
+        <activity
+            android:name=".ui.customer.WorkerDetailActivity"
+            android:exported="false" />
+
+        <!-- ====================================================
+             FIREBASE — google-services.json provides the rest
+             Place google-services.json in /app/ directory
+        ===================================================== -->
+
+    </application>
+
+</manifest>
